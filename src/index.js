@@ -22,7 +22,7 @@ const LOCAL_STORAGE_DIR = process.env[ENV_VARS.LOCAL_STORAGE_DIR] || '';
 const DEFAULT_SCREENSHOT_DIR_PATH = path.resolve(LOCAL_STORAGE_DIR, 'live_view');
 
 /**
- * `LivecastServer` enables serving of browser snapshots via web sockets. It includes its own client
+ * `InterfaceServer` enables serving of browser snapshots via web sockets. It includes its own client
  * that provides a simple frontend to viewing the captured snapshots. A snapshot consists of three
  * pieces of information, the currently opened URL, the content of the page (HTML) and its screenshot.
  *
@@ -35,25 +35,25 @@ const DEFAULT_SCREENSHOT_DIR_PATH = path.resolve(LOCAL_STORAGE_DIR, 'live_view')
  * }
  * ```
  *
- * `LivecastServer` is useful when you want to be able to inspect the current browser status on demand.
+ * `InterfaceServer` is useful when you want to be able to inspect the current browser status on demand.
  * When no client is connected, the webserver consumes very low resources so it should have a close
  * to zero impact on performance. Only once a client connects the server will start serving snapshots.
  * Once no longer needed, it can be disabled again in the client to remove any performance impact.
  *
- * NOTE: Screenshot taking in browser typically takes around 300ms. So having the `LivecastServer`
+ * NOTE: Screenshot taking in browser typically takes around 300ms. So having the `InterfaceServer`
  * always serve snapshots will have a significant impact on performance.
  *
  * It will take snapshots of the first page of the latest browser. Taking snapshots of only a
  * single page improves performance and stability dramatically in high concurrency situations.
  *
  * When running locally, it is often best to use a headful browser for debugging, since it provides
- * a better view into the browser, including DevTools, but `LivecastServer` works too.
+ * a better view into the browser, including DevTools, but `InterfaceServer` works too.
  * @ignore
  */
-class LivecastServer {
+class InterfaceServer {
     /**
      * @param {Object} [options]
-     *   All `LivecastServer` parameters are passed
+     *   All `InterfaceServer` parameters are passed
      *   via an options object with the following keys:
      * @param {string} [options.screenshotDirectoryPath]
      *   By default, the screenshots are saved to
@@ -68,7 +68,7 @@ class LivecastServer {
      *   pages from being hung up by a stalled screenshot.
      * @param {number} [options.maxSnapshotFrequencySecs=2]
      *   Use this parameter to further decrease the resource consumption
-     *   of `LivecastServer` by limiting the frequency at which it'll
+     *   of `InterfaceServer` by limiting the frequency at which it'll
      *   serve snapshots.
      */
     constructor(options = {}) {
@@ -81,7 +81,7 @@ class LivecastServer {
             promptHandlers = {},
         } = options;
 
-        this.log = defaultLog.child({ prefix: 'LivecastServer' });
+        this.log = defaultLog.child({ prefix: 'InterfaceServer' });
         this.screenshotDirectoryPath = screenshotDirectoryPath;
         this.maxScreenshotFiles = maxScreenshotFiles;
         this.snapshotTimeoutMillis = snapshotTimeoutSecs * 1000;
@@ -190,7 +190,7 @@ class LivecastServer {
             const snapshot = await addTimeoutToPromise(
                 this._makeSnapshot(page),
                 this.snapshotTimeoutMillis,
-                'LivecastServer: Serving of Live View timed out.',
+                'InterfaceServer: Serving of Live View timed out.',
             );
             this._pushSnapshot(snapshot);
         } catch (err) {
@@ -211,7 +211,7 @@ class LivecastServer {
      * @return {boolean}
      */
     hasClients() {
-        // Treat LivecastServer as a client, until at least one snapshot is made.
+        // Treat InterfaceServer as a client, until at least one snapshot is made.
         return this.lastSnapshot ? this.clientCount > 0 : true;
     }
 
@@ -285,7 +285,7 @@ class LivecastServer {
 
         this.port = parseInt(containerPort, 10);
         if (!(this.port >= 0 && this.port <= 65535)) {
-            throw new Error('Cannot start LivecastServer - invalid port specified by the '
+            throw new Error('Cannot start InterfaceServer - invalid port specified by the '
                 + `${ENV_VARS.CONTAINER_PORT} environment variable (was "${containerPort}").`);
         }
         this.liveViewUrl = process.env[ENV_VARS.CONTAINER_URL] || LOCAL_ENV_VARS[ENV_VARS.CONTAINER_URL];
@@ -345,4 +345,4 @@ class LivecastServer {
     }
 }
 
-module.exports = LivecastServer;
+module.exports = InterfaceServer;

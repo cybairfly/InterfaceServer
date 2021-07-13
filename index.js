@@ -1,3 +1,3 @@
-const LiveCastServer = require('./src/index');
+const InterfaceServer = require('./src/index');
 
-module.exports = { LiveCastServer };
+module.exports = { InterfaceServer };

@@ -1,5 +1,5 @@
 /**
- * Represents a live view snapshot to be served by {@link LiveCastServer}.
+ * Represents a live view snapshot to be served by {@link InterfaceServer}.
  * @property {string} pageUrl
  * @property {string} htmlContent
  * @property {number} screenshotIndex

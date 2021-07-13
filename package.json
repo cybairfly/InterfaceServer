@@ -1,5 +1,5 @@
 {
-  "name": "livecastserver",
+  "name": "interface-server",
   "version": "1.0.0",
   "description": "<!-- Mirror this part to src/index.js -->",
   "main": "index.js",
