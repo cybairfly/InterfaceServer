@@ -134,9 +134,9 @@ class InterfaceServer {
         try {
             await ensureDir(this.screenshotDirectoryPath);
             await promisifyServerListen(this.httpServer)(this.port);
-            this.log.info('Live view web server started', { publicUrl: this.liveViewUrl });
+            this.log.info('Interface web server started', { publicUrl: this.liveViewUrl });
         } catch (err) {
-            this.log.exception(err, 'Live view web server failed to start.');
+            this.log.exception(err, 'Interface web server failed to start.');
             this._isRunning = false;
         }
     }
@@ -151,8 +151,8 @@ class InterfaceServer {
         return new Promise((resolve) => {
             this.httpServer.close((err) => {
                 this._isRunning = false;
-                if (err) this.log.exception(err, 'Live view web server could not be stopped.');
-                else this.log.info('Live view web server stopped.');
+                if (err) this.log.exception(err, 'Interface web server could not be stopped.');
+                else this.log.info('Interface web server stopped.');
                 resolve();
             });
         });
@@ -170,7 +170,7 @@ class InterfaceServer {
      */
     async serve(page) {
         if (!this.hasClients()) {
-            this.log.debug('Live view server has no clients, skipping snapshot.');
+            this.log.debug('Interface server has no clients, skipping snapshot.');
             return;
         }
         // Only serve one snapshot at a time because Puppeteer
@@ -190,11 +190,11 @@ class InterfaceServer {
             const snapshot = await addTimeoutToPromise(
                 this._makeSnapshot(page),
                 this.snapshotTimeoutMillis,
-                'InterfaceServer: Serving of Live View timed out.',
+                'InterfaceServer: Interface update timed out.',
             );
             this._pushSnapshot(snapshot);
         } catch (err) {
-            this.log.exception(err, 'Serving of page for live view failed');
+            this.log.exception(err, 'Interface update failed');
         } finally {
             this.servingSnapshot = false;
         }
@@ -237,7 +237,7 @@ class InterfaceServer {
      */
     async _makeSnapshot(page) {
         const pageUrl = page.url();
-        this.log.info('Making live view snapshot.', { pageUrl });
+        this.log.info('Making interface snapshot.', { pageUrl });
         const [htmlContent, screenshot] = await Promise.all([
             page.content(),
             this.useScreenshots ? page.screenshot({
@@ -266,7 +266,7 @@ class InterfaceServer {
      */
     _pushSnapshot(snapshot) {
         // Send new snapshot to clients
-        this.log.debug('Sending live view snapshot', { createdAt: snapshot.createdAt, pageUrl: snapshot.pageUrl });
+        this.log.debug('Sending interface snapshot', { createdAt: snapshot.createdAt, pageUrl: snapshot.pageUrl });
         this.send('snapshot', snapshot);
     }
 
@@ -277,7 +277,7 @@ class InterfaceServer {
      */
     _deleteScreenshot(screenshotIndex) {
         unlink(this._getScreenshotPath(screenshotIndex))
-            .catch((err) => this.log.exception(err, 'Cannot delete live view screenshot.'));
+            .catch((err) => this.log.exception(err, 'Cannot delete interface screenshot.'));
     }
 
     _setupHttpServer() {
@@ -319,10 +319,10 @@ class InterfaceServer {
      */
     _socketConnectionHandler(socket) {
         this.clientCount++;
-        this.log.info('Live view client connected', { clientId: socket.id });
+        this.log.info('Interface client connected', { clientId: socket.id });
         socket.on('disconnect', (reason) => {
             this.clientCount--;
-            this.log.info('Live view client disconnected', { clientId: socket.id, reason });
+            this.log.info('Interface client disconnected', { clientId: socket.id, reason });
         });
         socket.on('promptAnswer', (data) => {
             this.log.debug('promptAnswer', data);
@@ -338,7 +338,7 @@ class InterfaceServer {
 
         socket.on('getLastSnapshot', () => {
             if (this.lastSnapshot) {
-                this.log.debug('Sending live view snapshot', { createdAt: this.lastSnapshot.createdAt, pageUrl: this.lastSnapshot.pageUrl });
+                this.log.debug('Sending interface snapshot', { createdAt: this.lastSnapshot.createdAt, pageUrl: this.lastSnapshot.pageUrl });
                 this.send('snapshot', this.lastSnapshot);
             }
         });
