@@ -1,160 +1,189 @@
 <!doctype html>
 <html>
 <head>
-    <title>Interface</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <style>
-        body {
-            font-family: sans-serif;
-            margin: 0;
-        }
-
-        header {
-            padding: 5px 15px;
-            background: linear-gradient(90deg, #1a346d, #6281c5);
-            color: white;
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 1.5rem;
-        }
-
-        h1 span {
-            font-weight: 400;
-        }
-
-        h2 {
-            font-size: 1rem;
-        }
-
-        main {
-            padding: 15px;
-        }
-
-        .tab-menu {
-            margin: 20px 0 0 0;
-            padding: 0;
-        }
-
-        .tab-menu li {
-            display: inline-block;
-            position: relative;
-            padding: 5px 10px;
-            margin-right: 5px;
-            color: #9fa5a9;
-            border: 1px solid #ddd;
-            border-bottom: none;
-            border-radius: 4px 4px 0 0;
-            cursor: pointer;
-            transition: background 0.3s ease-in;
-        }
-
-        .tab-menu li:hover {
-            background: #dddddd;
-            color: #9fa5a9;
-        }
-
-        .tab-menu li.active {
-            color: #11181c;
-        }
-
-        .tab-menu li.active:after {
-            content: "";
+    <title>Live view</title>
+    <style type="text/css">
+        html, body {
+            margin: 0 auto;
+            padding: 0 auto;
             width: 100%;
-            height: 1px;
-            position: absolute;
-            left: 0;
-            bottom: -1px;
-            background: white;
+            height: 100%;
+            overflow: hidden;
         }
 
-        .tabs {
-            border-top: 1px solid #ddd;
-            padding-top: 15px;
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: stretch;
         }
 
-        img#screenshotImg {
-            width: 100%
-        }
-
-        #htmlDiv pre {
-            border-radius: 4px;
-        }
-
-        button {
-            border-radius: 4px;
-        }
-
-        .btn-status {
+        a.button {
+            display: flex;
+            font-size: xx-large;
+            font-family: monospace;
+            text-decoration: none;
             color: white;
-            transition: background 0.3s ease-in;
-            width: 60px;
-            padding: 5px;
         }
 
-        #pauseButton {
-            background-color: #f0ad4e;
-            border-color: #eea236;
+        #pageUrl {
+            width: 100%;
+            color: white;
+            font-family: monospace;
+            background: black;
         }
 
-        #pauseButton:hover {
-            background-color: #eea236;
+        #liveView {
+            flex: 1;
+            margin: 0;
+            padding: 0;
+            display: block;
+            overflow: hidden;
         }
 
-        #resumeButton {
-            background-color: #5cb85c;
-            border-color: #4cae4c;
-        }
-
-        #resumeButton:hover {
-            background-color: #4cae4c;
-        }
-
-        .hidden {
+        #prompt.hidden {
             display: none;
         }
 
+        #prompt.active {
+            display: flex;
+            /*flex-direction: column;*/
+            justify-content: space-between;
+            align-items: stretch;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 10%;
+            color: white;
+            font-family: monospace;
+            background: black;
+        }
+
+        #abort {
+            flex: 1 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            /*background: orange;*/
+        }
+
+        #cancel {
+            flex: 5 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            /*background: red;*/
+        }
+
+        #confirm {
+            flex: 5 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            /*background: green;*/
+        }
+
+        #abort:hover {
+            background: orange;
+        }
+
+        #cancel:hover {
+            background: red;
+        }
+
+        #confirm:hover {
+            background: green;
+        }
+
+        #abort:active {
+            background: darkorange;
+        }
+
+        #cancel:active {
+            background: darkred;
+        }
+
+        #confirm:active {
+            background: darkgreen;
+        }
     </style>
-    <script src="https://cdn.socket.io/3.1.3/socket.io.min.js"></script>
-    <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.16.0/themes/prism.min.css" rel="stylesheet"/>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.slim.js"></script>
+
     <script>
         let liveViewSocket = null;
+
+        function showPrompt({showPrompt = {}}) {
+            if (!showPrompt) return;
+
+            const $prompt = document.querySelector('#prompt');
+
+            if ($prompt)
+                $prompt.setAttribute('class', 'active');
+        }
+
+        function hidePrompt() {
+            const $prompt = document.querySelector('#prompt');
+
+            if ($prompt)
+                $prompt.setAttribute('class', 'hidden');
+        }
+
+        function answerPrompt(data) {
+            if (!data)
+                return;
+
+            if (data.action) {
+                hidePrompt();
+                console.log(data);
+                liveViewSocket.emit('answerPrompt', data);
+            }
+        }
+
         function showSnapshot(snapshot) {
             if (!snapshot) return;
-            const hasImg = snapshot.screenshotIndex !== null;
-            if (hasImg) {
-                console.log('Show screenshot');
-                $('#screenshotLink').show();
+            const {htmlContent, screenshotIndex} = snapshot;
+            document.querySelector('#pageUrl').innerText = snapshot.pageUrl;
+            const $liveView = document.querySelector('#liveView');
+
+            if (typeof screenshotIndex === 'number') {
+                console.log('Loading screen at index:', screenshotIndex);
+                $liveView.contentDocument.querySelector('img#remoteScreen').src = `/screenshot/${screenshotIndex}`;
             } else {
-                activateHtmlTab();
-                $('#screenshotLink').hide();
+                console.log('Loading target content');
+                $liveView.srcdoc = htmlContent;
             }
-            $('#pageUrl').text(snapshot.pageUrl).attr('href', snapshot.pageUrl);
-            $('#htmlContent').text(snapshot.htmlContent);
-            $('#waitContainer').hide();
-            if (hasImg) $('#screenshotImg').attr('src', `./screenshot/${snapshot.screenshotIndex}`);
-            $('#snapshotContainer').show();
-            Prism.highlightAll();
+        }
+
+        function getSocketIoPath() {
+            const {pathname} = window.location;
+            return pathname.endsWith('/')
+                ? pathname + 'socket.io'
+                : '/socket.io';
         }
 
         function connect() {
             if (liveViewSocket && liveViewSocket.connected) return;
-            liveViewSocket = io();
+            liveViewSocket = io({
+                path: getSocketIoPath(),
+            });
+            liveViewSocket.on('prompt', showPrompt);
             liveViewSocket.on('snapshot', showSnapshot);
             liveViewSocket.on('connect', () => {
                 console.log(`Client ID: ${liveViewSocket.id} connected.`);
-                // Don't wait for the next screenshot to be made.
-                $('#resumeButton').hide();
-                $('#pauseButton').show();
                 liveViewSocket.emit('getLastSnapshot');
             });
-            liveViewSocket.on('prompt', showPrompt)
             liveViewSocket.on('disconnect', () => {
-                $('#resumeButton').show();
-                $('#pauseButton').hide();
+                const $pageUrl = document.querySelector('#pageUrl');
+                $pageUrl.innerText = `${$pageUrl.innerText} (disconnected)`
             });
+
+            // document.querySelector('#abort').addEventListener('click', prompt.bind({action: 'abort'}));
+            // document.querySelector('#cancel').addEventListener('click', prompt.bind({action: 'cancel'}));
+            // document.querySelector('#confirm').addEventListener('click', prompt.bind({action: 'confirm'}));
         }
 
         function disconnect() {
@@ -163,32 +192,17 @@
             }
         }
 
-        // TODO: this is never actually triggered
-        function onMessageFromPlatform(msg) {
-            if (msg.data === 'LIVE_VIEW_TAB_OPEN') {
-                msg.source.postMessage('ACK', msg.origin);
+        function onMessageFromPlatform(message) {
+            if (message.data === 'LIVE_VIEW_TAB_OPEN') {
+                message.source.postMessage('ACK', message.origin);
                 connect();
             }
-            if (msg.data === 'LIVE_VIEW_TAB_CLOSED') {
+            if (message.data === 'LIVE_VIEW_TAB_CLOSED') {
                 disconnect()
             }
         }
 
-        function showPrompt(promptOptions={}) {
-            console.log('Showing prompt.', promptOptions)
-            const { title='Confirm', message='Confirm' } = promptOptions;
-            $('#prompt').modal('show');
-            $('#prompt .modal-title').text(title);
-            $('#prompt .modal-body').text(message);
-        }
-
-        function promptAnswer(data) {
-            console.log('Sending answer to prompt.', data);
-            $('#prompt').modal('hide');
-            liveViewSocket.emit('promptAnswer', data);
-        }
-
-        function isThisTopWindow () {
+        function isThisTopWindow() {
             try {
                 return window.self === window.top;
             } catch (e) {
@@ -196,118 +210,27 @@
             }
         }
 
+        hidePrompt();
+
         window.addEventListener('message', onMessageFromPlatform);
 
-        const activateScreenshotTab = () => {
-            $('#htmlLink').removeClass('active');
-            $('#screenshotLink').addClass('active');
-            $('#screenshotDiv').show();
-            $('#htmlDiv').hide();
-        }
+        // Show initial snapshot if it exists when client is fetched.
+        showSnapshot(window.lastSnapshot);
 
-        const activateHtmlTab = () => {
-            $('#screenshotLink').removeClass('active');
-            $('#htmlLink').addClass('active');
-            $('#screenshotDiv').hide();
-            $('#htmlDiv').show();
-        }
-
-        $(() => {
-            // Show initial snapshot if it exists when client is fetched.
-            showSnapshot(window.lastSnapshot);
-
-            // When displayed in a separate window, connect immediately.
-            // TODO: find a working way to skip connecting if interface is not opened
-            // if (isThisTopWindow()) connect();
-            
-            connect();
-
-            $('#resumeButton').click((event) => {
-                event.preventDefault();
-                connect();
-                $('#resumeButton').hide();
-                $('#pauseButton').show();
-            });
-            $('#pauseButton').click((event) => {
-                event.preventDefault();
-                disconnect();
-                $('#resumeButton').show();
-                $('#pauseButton').hide();
-            });
-            $('#screenshotLink').click((event) => {
-                event.preventDefault();
-                activateScreenshotTab();
-            });
-            $('#htmlLink').click(() => {
-                event.preventDefault();
-                activateHtmlTab();
-            });
-        });
+        // When displayed in a separate window, connect immediately.
+        if (isThisTopWindow()) connect();
     </script>
 </head>
 <body>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.16.0/prism.js"></script>
+<div id="pageUrl">Loading...</div>
+<iframe src="frame.html" id="liveView" scrolling="no" sandbox="allow-same-origin allow-scripts"></iframe>
 
-<header id="header">
-    <h1>APIFY <span>Interface</span></h1>
-</header>
+<div id="prompt" class="hidden">
+    <a href="#" id="cancel" class="button" onclick="answerPrompt({action: 'cancel'})">CANCEL</a>
+    <a href="#" id="abort" class="button" onclick="answerPrompt({action: 'abort'})">ABORT</a>
+    <a href="#" id="confirm" class="button" onclick="answerPrompt({action: 'confirm'})">CONFIRM</a>
+</div>
 
-<main>
-    <div id="prompt" class="hidden modal fade" data-bs-backdrop="static" data-bs-keyboard="false">
-        <div class="modal-dialog" role="document" >
-            <div class="modal-content">
-              <div class="modal-header">
-                <h4 class="modal-title">Modal title</h4>
-              </div>
-              <div class="modal-body">
-                  user can select an option here from a list
-              </div>
-              <div class="modal-footer">
-                <button type="button" id="cancel" onclick="promptAnswer({action: 'cancel'})"
-                    class="btn btn-danger">CANCEL</button>
-                <button type="button" id="abort" class="btn btn-light"
-                    onclick="promptAnswer({action: 'abort'})">ABORT</button>
-                <button type="button" id="confirm" class="btn btn-primary"
-                    onclick="promptAnswer({action: 'confirm'})">CONFIRM</button>
-              </div>
-            </div>
-         </div>
-    </div>
-
-    <p id="waitContainer">
-        Please wait for the actor to start and make a first snapshot.<br>
-        <img src="./loading.gif"/>
-    </p>
-
-    <div id="snapshotContainer" style="display: none">
-        <div class="navigation">
-            <h2>
-                Current URL: <a href="#" id="pageUrl" target="_blank" rel="noopener noreferrer"></a>
-            </h2>
-
-            <button id="pauseButton" class="btn-status">Pause</button>
-            <button id="resumeButton" class="btn-status" style="display: none">Resume</button>
-
-            <div>
-                <ul class="tab-menu">
-                    <li id="screenshotLink" class="active">Screenshot</li>
-                    <li id="htmlLink">HTML</li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="tabs">
-            <div class="tab" id="screenshotDiv">
-                <img id="screenshotImg" src="./loading.gif"/>
-            </div>
-
-            <div class="tab" id="htmlDiv" style="display: none; font-size: 13px;">
-                <pre><code id="htmlContent" class="language-html"></code></pre>
-            </div>
-        </div>
-    </div>
-</main>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 </body>
 </html>
