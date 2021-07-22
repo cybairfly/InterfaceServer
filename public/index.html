@@ -194,12 +194,19 @@
         // Show initial snapshot if it exists when client is fetched.
         showSnapshot(window.lastSnapshot);
 
-        // When displayed in a separate window, connect immediately.
-        if (isThisTopWindow()) connect();
-        if (!isThisTopWindow()) {
-            document.getElementById('pageUrl').innerText = 'Iframe is not supported - please open in separate window!';
-            document.getElementById('pageUrl').classList.add('hidden');
-        }
+        window.addEventListener(
+            'load',
+            () => {
+                // When displayed in a separate window, connect immediately.
+                if (isThisTopWindow()) connect();
+                if (!isThisTopWindow()) {
+                    // if in iframe, only show a warning
+                    document.getElementById('pageUrl').innerText = 'Iframe is not supported - please open in separate window!';
+                    document.getElementById('liveView').style.display = 'none';
+                }
+            },
+        )
+
     </script>
 </head>
 <body>
