@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 const Apify = require('apify');
 const fs = require('fs-extra');
-const InterfaceServer = require('../src/index');
+const { InterfaceServer } = require('../index');
 
 const PROMPT_HANDLERS = {
     cancel: () => {
