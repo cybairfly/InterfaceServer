@@ -111,14 +111,12 @@
         }
     </style>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.slim.js"></script>
+    <script src="https://cdn.socket.io/3.1.3/socket.io.min.js"></script>
 
     <script>
         let liveViewSocket = null;
 
         function showPrompt({showPrompt = {}}) {
-            if (!showPrompt) return;
-
             const $prompt = document.querySelector('#prompt');
 
             if ($prompt)
@@ -133,14 +131,9 @@
         }
 
         function answerPrompt(data) {
-            if (!data)
-                return;
-
-            if (data.action) {
-                hidePrompt();
-                console.log(data);
-                liveViewSocket.emit('answerPrompt', data);
-            }
+            hidePrompt();
+            console.log(data);
+            liveViewSocket.emit('answerPrompt', data);
         }
 
         function showSnapshot(snapshot) {
@@ -180,25 +173,11 @@
                 const $pageUrl = document.querySelector('#pageUrl');
                 $pageUrl.innerText = `${$pageUrl.innerText} (disconnected)`
             });
-
-            // document.querySelector('#abort').addEventListener('click', prompt.bind({action: 'abort'}));
-            // document.querySelector('#cancel').addEventListener('click', prompt.bind({action: 'cancel'}));
-            // document.querySelector('#confirm').addEventListener('click', prompt.bind({action: 'confirm'}));
         }
 
         function disconnect() {
             if (liveViewSocket && liveViewSocket.connected) {
                 liveViewSocket.close();
-            }
-        }
-
-        function onMessageFromPlatform(message) {
-            if (message.data === 'LIVE_VIEW_TAB_OPEN') {
-                message.source.postMessage('ACK', message.origin);
-                connect();
-            }
-            if (message.data === 'LIVE_VIEW_TAB_CLOSED') {
-                disconnect()
             }
         }
 
@@ -212,13 +191,15 @@
 
         hidePrompt();
 
-        window.addEventListener('message', onMessageFromPlatform);
-
         // Show initial snapshot if it exists when client is fetched.
         showSnapshot(window.lastSnapshot);
 
         // When displayed in a separate window, connect immediately.
         if (isThisTopWindow()) connect();
+        if (!isThisTopWindow()) {
+            document.getElementById('pageUrl').innerText = 'Iframe is not supported - please open in separate window!';
+            document.getElementById('pageUrl').classList.add('hidden');
+        }
     </script>
 </head>
 <body>
