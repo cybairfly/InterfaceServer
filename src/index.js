@@ -1,9 +1,8 @@
 const Apify = require('apify');
 
 const http = require('http');
-const fs = require('fs-extra');
+const { writeFile, ensureDir, unlink } = require('fs-extra');
 const path = require('path');
-const { promisify } = require('util');
 const express = require('express');
 const socketio = require('socket.io');
 const { promisifyServerListen } = require('apify-shared/utilities');
@@ -13,10 +12,6 @@ const { addTimeoutToPromise } = require('./utils/utils');
 const Snapshot = require('./snapshot');
 
 const { log: defaultLog } = Apify.utils;
-
-const writeFile = promisify(fs.writeFile);
-const unlink = promisify(fs.unlink);
-const ensureDir = promisify(fs.ensureDir);
 
 const LOCAL_STORAGE_DIR = process.env[ENV_VARS.LOCAL_STORAGE_DIR] || '';
 const DEFAULT_SCREENSHOT_DIR_PATH = path.resolve(LOCAL_STORAGE_DIR, 'live_view');
