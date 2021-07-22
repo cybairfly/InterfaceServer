@@ -76,6 +76,7 @@ class InterfaceServer {
             promptHandlers = {},
         } = options;
 
+        this.options = options;
         this.log = defaultLog.child({ prefix: 'InterfaceServer' });
         this.screenshotDirectoryPath = screenshotDirectoryPath;
         this.maxScreenshotFiles = maxScreenshotFiles;
