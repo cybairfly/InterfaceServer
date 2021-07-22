@@ -324,8 +324,8 @@ class InterfaceServer {
             this.clientCount--;
             this.log.info('Interface client disconnected', { clientId: socket.id, reason });
         });
-        socket.on('promptAnswer', (data) => {
-            this.log.debug('promptAnswer', data);
+        socket.on('answerPrompt', (data) => {
+            this.log.debug('answerPrompt', data);
 
             try {
                 data = JSON.parse(`${data}`);
