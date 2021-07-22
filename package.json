@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node index",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "author": "",
   "license": "ISC",
@@ -18,8 +18,10 @@
     "apify-shared": "^0.5.9",
     "eslint": "^7.19.0",
     "express": "^4.17.1",
-    "fs-extra": "^9.1.0",
+    "fs-extra": "^10.0.0",
+    "jest": "^27.0.6",
     "puppeteer": "*",
-    "socket.io": "^3.1.1"
+    "socket.io": "^3.1.1",
+    "supertest": "^6.1.4"
   }
 }
