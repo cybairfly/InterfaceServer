@@ -189,8 +189,8 @@ class InterfaceServer {
                 'InterfaceServer: Interface update timed out.',
             );
             this._pushSnapshot(snapshot);
-        } catch (err) {
-            this.log.exception(err, 'Interface update failed');
+        } catch (error) {
+            this.log.warning('Interface update failed');
         } finally {
             this.servingSnapshot = false;
         }
