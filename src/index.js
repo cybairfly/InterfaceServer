@@ -73,7 +73,7 @@ class InterfaceServer {
             snapshotTimeoutSecs = 3,
             maxSnapshotFrequencySecs = 2,
             useScreenshots = false,
-            promptHandlers = {},
+            prompt: { handlers: promptHandlers } = {},
         } = options;
 
         this.options = options;
