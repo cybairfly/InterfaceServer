@@ -95,7 +95,7 @@ class InterfaceServer {
         // Server
         this.clientCount = 0;
         this._isRunning = false;
-        this.httpServer = null;
+        this._isPromptActive = false;
         this.socketio = null;
         this.servingSnapshot = false;
 
@@ -103,11 +103,13 @@ class InterfaceServer {
     }
 
     async prompt(options = {}) {
+        this._isPromptActive = true;
         const response = await new Promise((resolve) => {
             this.resolveMessagePromise = resolve;
             this.send('prompt', options)
                 .then(() => this.log.debug('Waiting for frontend prompt response'));
         });
+        this._isPromptActive = false;
         this.log.debug('Response data.', { response });
         this.handleResponse(response);
     }
@@ -167,6 +169,10 @@ class InterfaceServer {
     async serve(page) {
         if (!this.hasClients()) {
             this.log.debug('Interface server has no clients, skipping snapshot.');
+            return;
+        }
+        if (this._isPromptActive) {
+            this.log.debug('Prompt is active, skipping snapshot.');
             return;
         }
         // Only serve one snapshot at a time because Puppeteer
