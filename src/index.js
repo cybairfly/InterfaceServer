@@ -99,6 +99,7 @@ class InterfaceServer {
         this.lastScreenshotIndex = 0;
 
         // Server
+        this.page = null;
         this.clientCount = 0;
         this._isRunning = false;
         this._isPromptActive = false;
@@ -203,6 +204,8 @@ class InterfaceServer {
      * @return {Promise<void>}
      */
     async serve(page) {
+        this.page = page || this.page;
+
         if (!this.hasClients()) {
             this.log.debug('Interface server has no clients, skipping snapshot.');
             return;
