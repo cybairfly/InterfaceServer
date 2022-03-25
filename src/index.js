@@ -360,6 +360,7 @@ class InterfaceServer {
      */
     _socketConnectionHandler(socket) {
         this.clientCount++;
+        this.send('reset');
         this.log.info('Interface client connected', { clientId: socket.id });
         socket.on('disconnect', (reason) => {
             this.clientCount--;
