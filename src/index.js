@@ -73,7 +73,13 @@ class InterfaceServer {
             snapshotTimeoutSecs = 3,
             maxSnapshotFrequencySecs = 2,
             useScreenshots = false,
-            prompt: { handlers: promptHandlers } = {},
+            httpServer,
+            client: {
+                route: clientRoute,
+            },
+            prompt: {
+                handlers: promptHandlers
+            } = {},
         } = options;
 
         this.options = options;
@@ -96,6 +102,8 @@ class InterfaceServer {
         this.clientCount = 0;
         this._isRunning = false;
         this._isPromptActive = false;
+        this.httpServer = httpServer || null;
+        this.clientRoute = clientRoute || path.join(__dirname, '../public');
         this.socketio = null;
         this.servingSnapshot = false;
 
@@ -292,10 +300,10 @@ class InterfaceServer {
         }
         this.liveViewUrl = process.env[ENV_VARS.CONTAINER_URL] || LOCAL_ENV_VARS[ENV_VARS.CONTAINER_URL];
 
-        this.httpServer = http.createServer();
+        this.httpServer = this.httpServer || http.createServer();
         const app = express();
 
-        app.use('/', express.static(path.join(__dirname, '../public')));
+        app.use('/', express.static(this.clientRoute));
 
         // Serves JPEG with the last screenshot
         app.get('/screenshot/:index', (req, res) => {
