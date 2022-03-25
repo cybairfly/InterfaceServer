@@ -119,13 +119,12 @@ class InterfaceServer {
         });
         this._isPromptActive = false;
         this.log.debug('Response data.', { response });
-        this.handleResponse(response);
+        return this.handleResponse(response);
     }
 
     handleResponse(response) {
         if (!this.promptHandlers[response.action]) {
-            this.log.warning('No handler for response action', response);
-            return;
+            return response;
         }
         return this.promptHandlers[response.action](response);
     }
