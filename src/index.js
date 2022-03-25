@@ -132,8 +132,29 @@ class InterfaceServer {
 
     handleResponse(response) {
         if (!this.promptHandlers[response.action]) {
+            this.log.info('No handler found for prompt action', response);
+
+            switch (response.action) {
+                case 'abort':
+                    this.log.info('Abort actor on user request');
+                    process.exit(0);
+    
+                case 'cancel':
+                    this.log.info('Cancel action on user request');
+                    break;
+    
+                case 'confirm':
+                    this.log.info('Operation confirmed by the user');
+                    break;
+    
+                default:
+                    this.log.error('Unknown or missing prompt action');
+                    process.exit(0);
+            }
+
             return response;
         }
+        
         return this.promptHandlers[response.action](response);
     }
 
