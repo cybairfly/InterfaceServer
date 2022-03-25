@@ -113,12 +113,20 @@ class InterfaceServer {
     async prompt(options = {}) {
         this._isPromptActive = true;
         const response = await new Promise((resolve) => {
+            if (this.lastSnapshot)
+                this.lastSnapshot.prompt = {
+                    ...options
+                };
+
             this.resolveMessagePromise = resolve;
             this.send('prompt', options)
                 .then(() => this.log.debug('Waiting for frontend prompt response'));
         });
         this._isPromptActive = false;
+        this.lastSnapshot.prompt = null;
+        this._pushSnapshot(this.lastSnapshot);
         this.log.debug('Response data.', { response });
+
         return this.handleResponse(response);
     }
 
