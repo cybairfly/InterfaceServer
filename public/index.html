@@ -1,9 +1,11 @@
 <!doctype html>
 <html>
+
 <head>
-    <title>Live view</title>
+    <title>Automation Interface</title>
     <style type="text/css">
-        html, body {
+        html,
+        body {
             margin: 0 auto;
             padding: 0 auto;
             width: 100%;
@@ -113,46 +115,90 @@
 
     <script src="https://cdn.socket.io/3.1.3/socket.io.min.js"></script>
 
-    <script>
+    <script defer>
         let liveViewSocket = null;
 
-        function showPrompt({showPrompt = {}}) {
-            const $prompt = document.querySelector('#prompt');
+        const sleep = ms => new Promise(ok => setTimeout(ok, ms));
 
+        const gatherInputs = $liveView => Array
+            .from($liveView.contentDocument.forms)
+            .map(form => Array
+                .from(new FormData(form)))
+            .flatMap(input => input)
+            .flatMap(([name, value]) => ({ [name]: value }))
+            .reduce((pool, next) => ({ ...pool, ...next }), {});
+
+        function showPrompt({ viewPath }) {
+            const $prompt = document.querySelector('#prompt');
             if ($prompt)
                 $prompt.setAttribute('class', 'active');
+
+            if (!viewPath) return;
+
+            console.log('Loading custom view');
+            console.log({ viewPath });
+
+            const $liveView = document.querySelector('#liveView');
+            $liveView.src = viewPath;
         }
 
         function hidePrompt() {
             const $prompt = document.querySelector('#prompt');
-
             if ($prompt)
                 $prompt.setAttribute('class', 'hidden');
         }
 
-        function answerPrompt(data) {
+        async function resetView() {
             hidePrompt();
-            console.log(data);
-            liveViewSocket.emit('answerPrompt', data);
+            const $liveView = document.querySelector('#liveView');
+            $liveView.src = 'frame.html';
+            await awaitSelector($liveView, 'img#remoteScreen');
+        }
+
+        async function awaitSelector(parent, selector) {
+            const condition = () => parent.contentDocument ?
+                parent.contentDocument.querySelector(selector) :
+                parent.querySelector(selector);
+
+            while (!condition()) {
+                await sleep(1000);
+                console.log(`Awaiting selector in the DOM: ${selector}`);
+            }
+        }
+
+        async function answerPrompt(action) {
+            const $liveView = document.querySelector('#liveView');
+            const inputs = gatherInputs($liveView);
+            await resetView();
+
+            liveViewSocket.emit('answerPrompt', { action, inputs });
         }
 
         function showSnapshot(snapshot) {
             if (!snapshot) return;
-            const {htmlContent, screenshotIndex} = snapshot;
+
+            if (snapshot.prompt)
+                return showPrompt(snapshot.prompt);
+
+            const { htmlContent, screenshotIndex } = snapshot;
             document.querySelector('#pageUrl').innerText = snapshot.pageUrl;
+
             const $liveView = document.querySelector('#liveView');
 
             if (typeof screenshotIndex === 'number') {
                 console.log('Loading screen at index:', screenshotIndex);
-                $liveView.contentDocument.querySelector('img#remoteScreen').src = `/screenshot/${screenshotIndex}`;
-            } else {
+                const remoteScreen = $liveView.contentDocument.querySelector('img#remoteScreen');
+
+                if (remoteScreen)
+                    remoteScreen.src = `/screenshot/${screenshotIndex}`;
+            } else if (htmlContent) {
                 console.log('Loading target content');
                 $liveView.srcdoc = htmlContent;
             }
         }
 
         function getSocketIoPath() {
-            const {pathname} = window.location;
+            const { pathname } = window.location;
             return pathname.endsWith('/')
                 ? pathname + 'socket.io'
                 : '/socket.io';
@@ -164,10 +210,13 @@
                 path: getSocketIoPath(),
             });
             liveViewSocket.on('prompt', showPrompt);
+            // liveViewSocket.on('reset', resetView);
             liveViewSocket.on('snapshot', showSnapshot);
             liveViewSocket.on('connect', () => {
                 console.log(`Client ID: ${liveViewSocket.id} connected.`);
-                liveViewSocket.emit('getLastSnapshot');
+                resetView().then(() => {
+                    liveViewSocket.emit('getLastSnapshot');
+                });
             });
             liveViewSocket.on('disconnect', () => {
                 const $pageUrl = document.querySelector('#pageUrl');
@@ -209,16 +258,18 @@
 
     </script>
 </head>
+
 <body>
 
-<div id="pageUrl">Loading...</div>
-<iframe src="frame.html" id="liveView" scrolling="no" sandbox="allow-same-origin allow-scripts"></iframe>
+    <div id="pageUrl">Loading...</div>
+    <iframe src="frame.html" id="liveView" scrolling="no" sandbox="allow-same-origin allow-scripts"></iframe>
 
-<div id="prompt" class="hidden">
-    <a href="#" id="cancel" class="button" onclick="answerPrompt({action: 'cancel'})">CANCEL</a>
-    <a href="#" id="abort" class="button" onclick="answerPrompt({action: 'abort'})">ABORT</a>
-    <a href="#" id="confirm" class="button" onclick="answerPrompt({action: 'confirm'})">CONFIRM</a>
-</div>
+    <div id="prompt" class="hidden">
+        <a href="#" id="cancel" class="button" onclick="answerPrompt('cancel')">CANCEL</a>
+        <a href="#" id="abort" class="button" onclick="answerPrompt('abort')">ABORT</a>
+        <a href="#" id="confirm" class="button" onclick="answerPrompt('confirm')">CONFIRM</a>
+    </div>
 
 </body>
+
 </html>
