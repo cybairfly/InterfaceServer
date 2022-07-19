@@ -235,7 +235,7 @@ class InterfaceServer {
             );
             this._pushSnapshot(snapshot);
         } catch (error) {
-            this.log.warning('Interface update failed');
+            this.log.warning(`Interface update failed due to reason: ${error.message}`);
         } finally {
             this.servingSnapshot = false;
         }
