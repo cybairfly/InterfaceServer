@@ -120,7 +120,17 @@
     <script defer>
         let liveViewSocket = null;
 
+        const messageListener = viewData => event => {
+            const frameWindow = event.target.contentWindow;
+            postCustomMessage(frameWindow, viewData);
+        };
+
         const sleep = ms => new Promise(ok => setTimeout(ok, ms));
+
+        const postCustomMessage = (window, message) => window.postMessage({
+            source: 'AutomationInterface',
+            content: message,
+        });
 
         const gatherInputs = $liveView => Array
             .from($liveView.contentDocument.forms)
@@ -130,18 +140,20 @@
             .flatMap(([name, value]) => ({ [name]: value }))
             .reduce((pool, next) => ({ ...pool, ...next }), {});
 
-        function showPrompt({ viewPath }) {
-            const $prompt = document.querySelector('#prompt');
-            if ($prompt)
+        function showPrompt({ viewPath, viewData }) {
+            if (!viewPath) {
+                const $prompt = document.querySelector('#prompt');
                 $prompt.setAttribute('class', 'active');
+                $prompt.removeAttribute('hidden');
+            } else {
+                console.log('Loading custom view');
+                console.log({ viewPath });
 
-            if (!viewPath) return;
-
-            console.log('Loading custom view');
-            console.log({ viewPath });
-
-            const $liveView = document.querySelector('#liveView');
-            $liveView.src = viewPath;
+                const $liveView = document.querySelector('#liveView');
+                $liveView.src = viewPath;
+                $liveView.windowMessageListener = messageListener(viewData);
+                $liveView.addEventListener("load", $liveView.windowMessageListener);
+            }
         }
 
         function hidePrompt() {
@@ -153,6 +165,7 @@
         async function resetView() {
             hidePrompt();
             const $liveView = document.querySelector('#liveView');
+            $liveView.removeEventListener('load', $liveView.windowMessageListener);
             $liveView.src = 'frame.html';
             await awaitSelector($liveView, 'img#remoteScreen');
         }
@@ -168,12 +181,12 @@
             }
         }
 
-        async function answerPrompt(action) {
+        async function answerPrompt({ action, output }) {
             const $liveView = document.querySelector('#liveView');
             const inputs = gatherInputs($liveView);
             await resetView();
 
-            liveViewSocket.emit('answerPrompt', { action, inputs });
+            liveViewSocket.emit('answerPrompt', { action, inputs, output });
         }
 
         function showSnapshot(snapshot) {
@@ -247,6 +260,16 @@
 
         window.addEventListener('load', () => connect());
 
+        window.addEventListener("message", event => {
+            const { data } = event;
+            const { source, content } = data;
+
+            const isAlienOrigin = source !== 'AutomationInterface';
+            if (isAlienOrigin) return;
+
+            answerPrompt({ action: 'custom', output: content });
+        });
+
     </script>
 </head>
 
@@ -255,10 +278,10 @@
     <div id="pageUrl">Loading...</div>
     <iframe src="frame.html" id="liveView" scrolling="no" sandbox="allow-same-origin allow-scripts"></iframe>
 
-    <div id="prompt" class="hidden">
-        <a href="#" id="cancel" class="button" onclick="answerPrompt('cancel')">CANCEL</a>
-        <a href="#" id="abort" class="button" onclick="answerPrompt('abort')">ABORT</a>
-        <a href="#" id="confirm" class="button" onclick="answerPrompt('confirm')">CONFIRM</a>
+    <div id="prompt" hidden>
+        <a href="#" id="cancel" name="cancel" class="button" onclick="answerPrompt({action: 'cancel'})">CANCEL</a>
+        <a href="#" id="abort" name="abort" class="button" onclick="answerPrompt({action: 'abort'})">ABORT</a>
+        <a href="#" id="confirm" name="confirm" class="button" onclick="answerPrompt({action: 'confirm'})">CONFIRM</a>
     </div>
 
 </body>

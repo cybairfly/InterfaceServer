@@ -144,6 +144,7 @@ class InterfaceServer {
                     this.log.info('Cancel action on user request');
                     break;
     
+                case 'custom':
                 case 'confirm':
                     this.log.info('Operation confirmed by the user');
                     break;
