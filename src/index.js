@@ -133,7 +133,7 @@ class InterfaceServer {
 
     handleResponse(response) {
         if (!this.promptHandlers[response.action]) {
-            this.log.info('No handler found for prompt action', response);
+            this.log.info(`No handler found for prompt action ${response.action}`);
 
             switch (response.action) {
                 case 'abort':
