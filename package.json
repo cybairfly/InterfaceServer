@@ -10,11 +10,11 @@
     "start": "node index",
     "test": "jest"
   },
-	"author": {
-		"name": "Vasek Tobey Vlcek",
-		"email": "cyberfly@email.cz",
-		"url": "http://www.apify.com"
-	},
+  "author": {
+    "name": "Vasek Tobey Vlcek",
+    "email": "cyberfly@email.cz",
+    "url": "http://www.apify.com"
+  },
   "contributors": [
     {
       "name": "Vasek Tobey Vlcek",
@@ -29,17 +29,18 @@
     }
   ],
   "dependencies": {
-    "apify": "^2.3.2",
+    "@apify/log": "^2.4.9",
+    "apify": "^3.1.15",
     "apify-shared": "^0.7.6",
     "express": "^4.17.1",
-    "fs-extra": "^10.0.0",
+    "fs-extra": "^10.1.0",
     "puppeteer": "*",
-    "socket.io": "^3.1.1"
+    "socket.io": "^3.1.2"
   },
   "devDependencies": {
-		"@apify/eslint-config": "^0.1.4",
-		"@types/puppeteer": "^5.4.3",
-		"eslint": "^7.27.0",
-		"jest": "^27.0.1"
-	}
+    "@apify/eslint-config": "^0.1.4",
+    "@types/puppeteer": "^5.4.3",
+    "eslint": "^7.27.0",
+    "jest": "^27.0.1"
+  }
 }
