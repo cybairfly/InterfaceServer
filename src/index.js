@@ -11,7 +11,8 @@ const { Page } = require('puppeteer'); // eslint-disable-line no-unused-vars
 const { addTimeoutToPromise } = require('./utils/utils');
 const Snapshot = require('./snapshot');
 
-const { log: defaultLog } = require('@apify/log');
+const { Log } = require('@apify/log');
+const defaultLog = new Log();
 
 const LOCAL_STORAGE_DIR = process.env[ENV_VARS.LOCAL_STORAGE_DIR] || '';
 const DEFAULT_SCREENSHOT_DIR_PATH = path.resolve(LOCAL_STORAGE_DIR, 'live_view');
